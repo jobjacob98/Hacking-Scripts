@@ -1,1 +1,1 @@
-<script>alert("YOU ARE HACKED!!");</script>
+<script>alert("HELLO");</script>

