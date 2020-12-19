@@ -121,6 +121,16 @@ def append_protocol(file_loc):
     return file_loc
 
 """ 
+* Function Name:  get_file_name()
+* Input:          file_loc (string): Path to the replacement file.
+* Output:         file_name (string): Name of the file extracted from the entire file path.
+* Logic:          The function is used to extract the name of the file from the entire file path.
+* Example Call:   file_name = get_file_name("rarlab.com/rar/rarlinux-6.0.b2.tar.gz")
+"""
+def get_file_name(file_loc):
+    return file_loc.split("/")[-1]
+
+""" 
 * Function Name:  process_packet()
 * Input:          packet (string): The packet in the packet queue.
 * Output:         None
@@ -134,7 +144,9 @@ def process_packet(packet):
     if(scapy_packet.haslayer(scapy.Raw)):
         if(scapy_packet.haslayer(scapy.TCP)):
             if(scapy_packet[scapy.TCP].dport == 80):
-                if(file_type in scapy_packet[scapy.Raw].load.decode('utf-8')):
+                packet_load = scapy_packet[scapy.Raw].load.decode('utf-8')
+
+                if((file_type in packet_load) and (file_name not in packet_load)):
                     print("\nReceived HTTP Request to download a " + file_type + " file...")
                     ack_list.append(scapy_packet[scapy.TCP].ack)
 
@@ -172,6 +184,7 @@ if __name__ == "__main__":
 
                     ack_list = []
                     file_loc = append_protocol(file_loc)
+                    file_name = get_file_name(file_loc)
 
                     queue = netfilterqueue.NetfilterQueue()
                     queue.bind(0, process_packet)
