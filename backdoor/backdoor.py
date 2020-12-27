@@ -164,7 +164,6 @@ def communicate(connection):
 
             elif((command[0] == "cd") and (len(command) > 1)):
                 result = change_working_directory(" ".join(command[1::]))
-                print(result)
                 send_data(connection, result)
 
             elif(command[0] == "download"):
