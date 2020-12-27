@@ -270,9 +270,9 @@ if __name__ == "__main__":
                         print("{}. {}".format(i, user))
                         i += 1
                     
-                    option = input("Enter option number of target / q to quit: ")
+                    option = input("Enter option number of target / q to quit / r to refresh: ")
 
-                    if(option != "q"):
+                    if((option != "q") and (option != "r")):
                         if(option in (str(i) for i in range(1, len(BackdoorAttack.compromised_users)+1))):
                             action = obj_list[int(option)-1].communicate()
 
@@ -284,7 +284,7 @@ if __name__ == "__main__":
 
                         else:
                             print("\n\nSorry, INVALID Option. Please try again.\n")
-                            
+                    
                 else:
                     if(print_waiting):
                         print("\nWaiting for compromised systems...\n")
