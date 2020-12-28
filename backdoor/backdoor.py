@@ -185,7 +185,7 @@ def communicate(connection):
             result = "Some unknown error occurred. Please verify your input."
             send_data(connection, result)
             continue
-    
+
     connection.close()
 
 
