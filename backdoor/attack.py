@@ -279,7 +279,7 @@ def create_listener(ip, port):
 * Input:          obj (BackdoorAttack object): The class instance for which the connection has to be re-established.
 * Output:         None
 * Logic:          The function is used to reconnect with a compromised system  whose connection was broken earlier.
-* Example Call:   reconnect(2)
+* Example Call:   reconnect(obj)
 """
 def reconnect(obj):
     obj.reconnect()
