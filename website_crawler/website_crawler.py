@@ -159,7 +159,7 @@ def get_links_from(response_content):
     def find_links(reg_exp):
         links = re.findall(reg_exp, response_content.decode('utf-8'))
         
-        if(links != None):
+        if(len(links) > 0):
             for link in links:
                 href_links.append(link)
 
@@ -185,7 +185,7 @@ def find_links_within_html(base_url, response_content):
     try:
         href_links = get_links_from(response_content)
         
-        if(href_links != None):
+        if(len(href_links) > 0):
             for link in href_links:
                 link = urllib.parse.urljoin(base_url, link)
                 link = "http://" + remove_protocol(link)
