@@ -93,7 +93,7 @@ def get_target_root(target):
 *                 subdomain_list (string): Path to wordlist file containing common subdomains.
 * Output:         target (string): Domain name of the target website to crawl with the subdomain removed if it existed.
 * Logic:          The function removes the subdomain if in case it is present in the input target from the user.
-* Example Call:   target = remove_existing_subdomain("mail.altoromutual.com")
+* Example Call:   target = remove_existing_subdomain("mail.altoromutual.com", "./subdomain_list.txt")
 """
 def remove_existing_subdomain(target, subdomain_list):
     if(len(target.split(".")) > 2):
@@ -116,7 +116,7 @@ def remove_existing_subdomain(target, subdomain_list):
 *                 pages_dirs_list (string): Path to wordlist file containing common file and directory names.
 * Output:         None
 * Logic:          The function finds all the webpages that gives successful response when combining the target domain with the given wordlist elements.
-* Example Call:   find_links_with_wordlist("mail.altoromutual.com")
+* Example Call:   find_links_with_wordlist("mail.altoromutual.com", "./pages_dirs_list.txt")
 """
 def find_links_with_wordlist(base_url, pages_dirs_list):
     global links
