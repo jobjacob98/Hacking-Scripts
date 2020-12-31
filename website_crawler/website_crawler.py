@@ -112,78 +112,83 @@ def remove_existing_subdomain(target, subdomain_list):
 
 """ 
 * Function Name:  find_links_with_wordlist()
-* Input:          target (string): The target website to crawl.
+* Input:          base_url (string): The base URL with subdomain.
 *                 pages_dirs_list (string): Path to wordlist file containing common file and directory names.
 * Output:         None
 * Logic:          The function finds all the webpages that gives successful response when combining the target domain with the given wordlist elements.
-* Example Call:   find_links_with_wordlist("altoromutual.com")
+* Example Call:   find_links_with_wordlist("mail.altoromutual.com")
 """
-def find_links_with_wordlist(target, pages_dirs_list):
+def find_links_with_wordlist(base_url, pages_dirs_list):
     global links
-    global subdomains
     global count
+    global stop
 
-    stop = 0
+    with open(pages_dirs_list, "r") as file:
+        for line in file:
+            page_dir = line.strip()
+            url_path = base_url + page_dir
 
-    for subdomain in subdomains:
-        base_url = "http://{}.{}".format(subdomain, target)
+            try:
+                response = requests.get(url_path)
 
-        with open(pages_dirs_list, "r") as file:
-            for line in file:
-                page_dir = line.strip()
+                if(response.status_code == 200):
+                    if(("#" not in url_path) and (url_path not in links)):
+                        links.append(url_path)
+                        count += 1
+                        print("[+] " + url_path)
 
-                url_path = base_url + "/" + page_dir
+                        find_links_within_html(url_path, response.content)
 
-                try:
-                    response = requests.get(url_path)
+            except KeyboardInterrupt:
+                stop = 1
+                break
 
-                    if(response.status_code == 200):
-                        if(("#" not in url_path) and (url_path not in links)):
-                            links.append(url_path)
-                            count += 1
-                            print("[+] " + url_path)
-
-                except KeyboardInterrupt:
-                    stop = 1
-                    break
-
-                except:
-                    continue
-
-        if(stop == 1):
-            break
+            except:
+                continue
 
 """ 
 * Function Name:  get_links_from()
 * Input:          response_content (string): The content of the target webpage.
 * Output:         href_links (list): List of all href links in the target page.
 * Logic:          The function retrieves all the links from the target webpage using the 'a' tags in the webpage.
-* Example Call:   href_links = get_links_from("mail.altoromutual.com")
+* Example Call:   href_links = get_links_from("<!DOCTYPE HTML> ...")
 """
 def get_links_from(response_content):
-    try:   
-        return re.findall('(?:href=")(.*?)"', response_content.decode('utf-8'))
+    href_links = []
+    
+    def find_links(reg_exp):
+        links = re.findall(reg_exp, response_content.decode('utf-8'))
+        
+        if(links != None):
+            for link in links:
+                href_links.append(link)
 
-    except:
-        pass
+
+    find_links('(?:href=")(.*?)"')
+    find_links("(?:href=')(.*?)'")
+
+    return href_links
 
 """ 
 * Function Name:  find_links_within_html()
-* Input:          target (string): The target webpage.
+* Input:          base_url (string): The URL of the target webpage.
 *                 response_content (string): The content of the target webpage.
 * Output:         None
 * Logic:          The function is used to find all the links in the target using the 'a' tags within each page in the target domain.
-* Example Call:   find_links_within_html("mail.altoromutual.com")
+* Example Call:   find_links_within_html("mail.altoromutual.com", "<!DOCTYPE HTML> ...")
 """
-def find_links_within_html(target, response_content):
+def find_links_within_html(base_url, response_content):
+    global target
     global count
+    global stop
 
     try:
         href_links = get_links_from(response_content)
         
         if(href_links != None):
             for link in href_links:
-                link = urllib.parse.urljoin(target, link)
+                link = urllib.parse.urljoin(base_url, link)
+                link = "http://" + remove_protocol(link)
 
                 if((target in link) and ("#" not in link) and (link not in links)):
                     try:
@@ -193,15 +198,18 @@ def find_links_within_html(target, response_content):
                             links.append(link)
                             count += 1
                             print("[+] " + link)
+                            
                             find_links_within_html(link, response.content)
 
                     except KeyboardInterrupt:
+                        stop = 1
                         break
 
                     except:
                         continue
                         
     except KeyboardInterrupt:
+        stop = 1
         pass
 
 
@@ -219,36 +227,36 @@ if __name__ == "__main__":
             print("\nCrawling " + target + "...\n\n")
 
             links = []
-            subdomains = []
             count = 0
 
-            with open(subdomain_list, "r") as file:
-                for line in file:
-                    subdomain = line.strip()
+            base_url = "http://" + target + "/"
+            response = requests.get(base_url)
 
-                    base_url = "http://{}.{}/".format(subdomain, target)
-                    
-                    try:
-                        response = requests.get(base_url)
+            if(response.status_code == 200):
+                links.append(base_url)
+                count += 1
+                print("[+] " + base_url)
 
-                        if(response.status_code == 200):
-                            links.append(base_url)
-                            count += 1
-                            print("[+] " + base_url)
+                find_links_within_html(base_url, response.content)
+            
+                if(stop == 0):
+                    print("\n\nCrawling completed...")
+                    print("Total links found till now: " + str(count))
+                    print("\nLooking for additional links using wordlist...this might take some time...\n\n")
 
-                            subdomains.append(subdomain)
-                            find_links_within_html(base_url, response.content)
+                    with open(subdomain_list, "r") as file:
+                        for line in file:
+                            if(stop == 0):
+                                subdomain = line.strip()
+                                base_url = "http://{}.{}/".format(subdomain, target)
+                                response = requests.get(base_url)
 
-                    except KeyboardInterrupt:
-                        stop = 1
-                        break
+                                if(response.status_code == 200):            
+                                    find_links_with_wordlist(base_url, pages_dirs_list)
 
-                    except:
-                        continue
-
-            if(stop == 0):
-                find_links_with_wordlist(target, pages_dirs_list)
-
+            else:
+                print("\n\nUnable to connect with target. Check the target domain and try again...")
+       
     except KeyboardInterrupt:
         pass
 
