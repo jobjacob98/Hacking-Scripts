@@ -78,11 +78,10 @@ def get_forms_from(response_content):
 * Example Call:   is_login_form = check_login_form("<form> ...")
 """
 def check_login_form(form):
-    user_names = ["user", "name"]
     input_list = form.findAll("input")
 
     if(len(input_list) == 3):
-        if((input_list[0].get("type") == "text") and (any(user_name in input_list[0].get("name") for user_name in user_names))):
+        if(input_list[0].get("type") == "text"):
             if(input_list[1].get("type") == "password"):
                 return 1
 
