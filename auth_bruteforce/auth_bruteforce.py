@@ -129,7 +129,7 @@ def brute_force(post_url, login_form, user_list, password_list):
                     prev_result_size = result_size
                     result_size = len(result.content)
 
-                    if((abs(prev_result_size - result_size) > 100) and (result_size > 300)):
+                    if((abs(prev_result_size - result_size) > 100) and (result_size > 500)):
                         if(reset_flag == 0):
                             print("[+] CRACKED!!! Username: {}, Password: {}".format(username, password))
                             print("\n\nTrying other login credentials...\n\n")
