@@ -88,6 +88,27 @@ def get_target_root(target):
     return target.split("/")[0]
 
 """ 
+* Function Name:  validate_ip()
+* Input:          ip (string): The given target/router IP which needs to be validated.
+* Output:         1 if the IP is valid or else 0  
+* Logic:          The function checks whether the given IP is valid or not by splitting and validating each part of the input IP.
+* Example Call:   valid_ip = validate_ip("192.168.1.1")
+"""
+def validate_ip(ip):
+    ip_parts = ip.split('.')
+
+    if len(ip_parts) != 4:
+        return 0
+    else:
+        for part in ip_parts:
+            if(0 <= int(part) <= 255):
+                continue
+            else:
+                return 0
+
+    return 1
+
+""" 
 * Function Name:  remove_existing_subdomain()
 * Input:          target (string): The target website to crawl.
 *                 subdomain_list (string): Path to wordlist file containing common subdomains.
@@ -96,17 +117,18 @@ def get_target_root(target):
 * Example Call:   target = remove_existing_subdomain("mail.altoromutual.com", "./subdomain_list.txt")
 """
 def remove_existing_subdomain(target, subdomain_list):
-    if(len(target.split(".")) > 2):
-        probable_subdomain = target.split(".")[0]
+    if(validate_ip(target) == 0):
+        if(len(target.split(".")) > 2):
+            probable_subdomain = target.split(".")[0]
 
-        with open(subdomain_list, "r") as file:
-            for line in file:
-                subdomain = line.strip()
+            with open(subdomain_list, "r") as file:
+                for line in file:
+                    subdomain = line.strip()
 
-                if(probable_subdomain == subdomain):
-                    target = target.split(".")[1::]
-                    target = ".".join(target)
-                    break
+                    if(probable_subdomain == subdomain):
+                        target = target.split(".")[1::]
+                        target = ".".join(target)
+                        break
 
     return target
 
@@ -261,5 +283,9 @@ if __name__ == "__main__":
         pass
 
     finally:
-        print("\n\nStopping crawl...")
-        print("\nTotal links found: " + str(count) + "\n")
+        try:
+            print("\n\nStopping crawl...")
+            print("\nTotal links found: " + str(count) + "\n")
+
+        except:
+            pass
